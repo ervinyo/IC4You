@@ -1,2 +1,2 @@
 # IC4You
-under construction
+This project is under construction
