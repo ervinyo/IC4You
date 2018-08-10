@@ -1,0 +1,201 @@
+<html>
+	<script src="{{ url_for('static', filename='jquery.min.js') }}" type="text/javascript"></script>
+    <head>
+		<link rel="stylesheet" href="../../static/style.css">
+	</head>
+	<body>
+      
+      
+<script type=text/javascript>
+
+$(document).ready(function(){
+	voice();
+	statsearch=0;
+});
+function voice(){
+	$.ajax({
+		type : 'POST',
+		url : "/voice",
+		contentType: 'application/json;charset=UTF-8',
+		success: function(data) {
+            if(data=="0"){
+				//$("#inputcommand").html("<h1>Google Cloud Speech API could not understand audio, please retry again...</h1>");
+				voice();
+			}else if(data.toLowerCase()=="play"){
+				//$("#inputcommand").html("<h1>"+data+"</h1>");
+				//alert(data);
+				//$("#videoContainer").html('<iframe width="560" height="315" src="https://www.youtube.com/embed/6ZfuNTqbHE8?autoplay=1&enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>');
+				toggleVideo(data);
+				voice();
+			}else if(data.toLowerCase()=="stop"){
+				element = $("#videoContainer").html();
+				toggleVideo("stop");
+				$(".ytp-play-button").click();
+				voice();
+			}else if(data.toLowerCase()=="close"){
+				//$(".box").hide();
+				var divs = document.getElementsByClassName("box");
+				for (var i = 0; i < divs.length; i = i + 1) {
+				  $(divs[i]).fadeOut("slow");
+				}
+				voice();
+			}else if(data.toLowerCase()=="show"){
+				var divs = document.getElementsByClassName("box");
+				for (var i = 0; i < divs.length; i = i + 1) {
+				  $(divs[i]).fadeIn("slow");
+				}
+				voice();
+			}else if(data.toLowerCase().includes("search")){
+				statsearch=1;
+				voice();
+			}else if(statsearch==1){
+				youtubeApiCall(data.toLowerCase())
+				alert(data.toLowerCase()+statsearch);
+				statsearch=0;
+				voice();
+			}else if(data.toLowerCase().includes("up")){
+				vidscroll("up");
+				voice();
+			}else if(data.toLowerCase().includes("down")){
+				alert("down");
+				vidscroll("down");
+				voice();
+			}else{
+				//$("#inputcommand").html("<h1>Not a command, please retry again say youtube or ...</h1>");
+				voice();
+			}
+		}
+	});
+	  
+}
+
+function toggleVideo(state) {
+    // if state == 'hide', hide. Else: show video
+    var div = document.getElementById("videoContainer");
+    var iframe = div.getElementsByTagName("iframe")[0].contentWindow;
+    //div.style.display = state == 'hide' ? 'none' : '';
+    func = state == 'stop' ? 'pauseVideo' : 'playVideo';
+	//alert(func);
+    iframe.postMessage('{"event":"command","func":"' + func + '","args":""}','*');
+}
+vidIdscroll=1;scroll=0;
+function vidscroll(direction){
+	//alert('down');
+	$("#vid"+vidIdscroll).css({backgroundColor: 'transparent'});
+	if(direction=="up"){
+		vidIdscroll--;
+		scroll=scroll-200;
+	}else if(direction=="down"){
+		vidIdscroll++;
+		scroll=scroll+200;
+	}
+	alert("#vid"+vidIdscroll);
+	$("#vid"+vidIdscroll).css({backgroundColor: 'red'});
+	alert($("#vid"+vidIdscroll)[0].scrollHeight);
+	$("#recomendation").scrollTop(scroll);
+}
+function gesture(){
+    
+	$.ajax({
+		type : 'POST',
+		url : "/gesture",
+		contentType: 'application/json;charset=UTF-8',
+		success: function(data) {
+            alert(data);
+			//gesture();
+		}
+	});
+}
+function youtubeApiCall(strsesarch){
+ $.ajax({
+	 cache: false,
+	 data: $.extend({
+		 key: 'AIzaSyAkgc4hjR3f0iKEpcv-ougFj0Ia3DUPOU4',
+		 q: strsesarch,
+		 part: 'snippet'
+	 }, {maxResults:20,pageToken:$("#pageToken").val()}),
+	 dataType: 'json',
+	 type: 'GET',
+	 timeout: 5000,
+	 url: 'https://www.googleapis.com/youtube/v3/search'
+ })
+.done(function(data) {
+	$('.btn-group').show();
+	 if (typeof data.prevPageToken === "undefined") {
+	 	$("#pageTokenPrev").hide();}else{$("#pageTokenPrev").show();
+	 }
+	 if (typeof data.nextPageToken === "undefined") {
+	 	$("#pageTokenNext").hide();}else{$("#pageTokenNext").show();
+	 }
+	 var items = data.items, videoList = "";
+	 $("#pageTokenNext").val(data.nextPageToken);
+	 $("#pageTokenPrev").val(data.prevPageToken);
+	 var vidId=1;
+	 $.each(items, function(index,e) {
+		if(vidId==1){
+				videoList = videoList + '<div id="vid'+vidId+'" style="height:200px;background-color:red;" class="hyv-video-list-item"><div class="hyv-content-wrapper"><a href="" class="hyv-content-link" title="'+e.snippet.title+'"><span class="title">'+e.snippet.title+'</span><span class="stat attribution">by <span>'+e.snippet.channelTitle+'</span></span></a></div><div class="hyv-thumb-wrapper"><a href="" class="hyv-thumb-link"><span class="hyv-simple-thumb-wrap"><img alt="'+e.snippet.title+'" src="'+e.snippet.thumbnails.default.url+'" width="120" height="90"></span></a></div></div>';
+		}else{
+			videoList = videoList + '<div id="vid'+vidId+'" style="height:200px;" class="hyv-video-list-item"><div class="hyv-content-wrapper"><a href="" class="hyv-content-link" title="'+e.snippet.title+'"><span class="title">'+e.snippet.title+'</span><span class="stat attribution">by <span>'+e.snippet.channelTitle+'</span></span></a></div><div class="hyv-thumb-wrapper"><a href="" class="hyv-thumb-link"><span class="hyv-simple-thumb-wrap"><img alt="'+e.snippet.title+'" src="'+e.snippet.thumbnails.default.url+'" width="120" height="90"></span></a></div></div>';
+		}
+		vidId++;
+	 });
+	 statsearch=0;
+	 $('#recomendation').html(videoList);
+	 //alert(videoList);
+ });
+}
+</script>
+	<div id=main>
+		<!--<div id="bg-back"></div>-->
+
+		<div id=videoContainer  align="center">
+			<iframe  id="video" id="video"width="560" height="315" src="https://www.youtube.com/embed/6ZfuNTqbHE8?enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+		    
+		</div>
+
+		<div id=action class="skewleft box">
+
+			<div id="inputcommand">
+				<h1>Voice</h1>
+			</div>
+			
+		</div>
+		<div id=nextState class="skewright box">
+			<div>
+				Gesture 1
+			</div>
+			<div>
+				Gesture 2
+			</div>
+			<div>
+				Gesture 3
+			</div>
+		</div>
+		<div id=recomendation class="skewright box" style="overflow:scroll;">
+			<div>
+				Video 1
+			</div>
+			<div>
+				Video 2
+			</div>
+			<div>
+				Video 3
+			</div>
+		</div>
+	</div>
+
+      
+    </body>
+</html>
+<style>
+body{
+	/*background:black;*/
+	background: radial-gradient(circle,  #080,black,black,black,black);
+	margin: 0px;
+}
+iframe {
+  /* optional */
+  width: 100%;
+  height: 100%; 
+}
+</style>
