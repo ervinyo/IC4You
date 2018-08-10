@@ -1,0 +1,3 @@
+8 gesture
+200 epoch, 10 batch, no color, crop dinamic, background remove black = 0, 100 images, batch3,4,5new, batch2,4 rgb 
+tes1 result = 82.5% tes fo new3
